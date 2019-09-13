@@ -41,15 +41,16 @@ class TemperatureMonitor(Ui_MainWindow, QtWidgets.QMainWindow):
         self.actionClose.triggered.connect(self.close_application)
         self.actionReset_Min_Max.triggered.connect(self.reset_min_max)
         self.actionSet_Refresh_Rate.triggered.connect(self.refresh_rate_popup)
+        self.actionAbout.triggered.connect(self.help_popup)
 
     def create_log(self):
         self.model.create_log_file()
-        self.logfileButton.setText("Stop csv log file")
+        self.logfileButton.setText('Stop csv log file')
         self.logfileButton.clicked.connect(self.stop_log)
 
     def stop_log(self):
         self.model.logging = False
-        self.logfileButton.setText("Create csv log file")
+        self.logfileButton.setText('Create csv log file')
         self.logfileButton.clicked.connect(self.create_log)
 
     def refresh_rate_popup(self):
@@ -58,9 +59,9 @@ class TemperatureMonitor(Ui_MainWindow, QtWidgets.QMainWindow):
             try:
                 new_rate = int(text)*1000
                 self.model.set_refresh_rate(new_rate)
-                self.refreshLabel.setText(f"Refresh Rate: {text}s")
+                self.refreshLabel.setText(f'Refresh Rate: {text}s')
             except Exception as e:
-                QtWidgets.QMessageBox.warning(None, "Error", "Invalid Request")
+                QtWidgets.QMessageBox.warning(None, 'Error', 'Invalid Request')
 
     def reset_min_max(self):
         self.model.reset_min_max()
@@ -70,7 +71,7 @@ class TemperatureMonitor(Ui_MainWindow, QtWidgets.QMainWindow):
 
     def close_application(self):
         choice = QtWidgets.QMessageBox.question(self, 'Close Application',
-                                            "Are you sure you want to quit?",
+                                            'Are you sure you want to quit?',
                                             QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
         if choice == QtWidgets.QMessageBox.Yes:
             sys.exit()
@@ -83,6 +84,11 @@ class TemperatureMonitor(Ui_MainWindow, QtWidgets.QMainWindow):
             self.model.add_device(device_checkbox.device)
         else:
             self.model.remove_device(device_checkbox.device)
+
+    def help_popup(self):
+        QtWidgets.QMessageBox.information(self, 'Temperature-Monitor', 'For help and information please view the README file')
+
+
             
 
 if __name__ == '__main__':
