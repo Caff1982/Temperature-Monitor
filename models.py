@@ -7,9 +7,6 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 
-INTEL_PATH = '/sys/class/thermal/'
-AMD_PATH = '/sys/class/hwmon/'
-
 
 class CustomTableModel(QtCore.QAbstractTableModel):
     """
@@ -18,7 +15,7 @@ class CustomTableModel(QtCore.QAbstractTableModel):
     def __init__(self, refresh_rate):
         QtCore.QAbstractTableModel.__init__(self)
 
-        self.path = AMD_PATH
+        self.path = '/sys/class/hwmon/'
         self.device_paths = [self.path + fn for fn in os.listdir(self.path)]
         self.get_device_data()
 
