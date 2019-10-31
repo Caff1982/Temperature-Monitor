@@ -31,7 +31,7 @@ class TemperatureMonitor(Ui_MainWindow, QtWidgets.QMainWindow):
         self.resetMinMaxButton.clicked.connect(self.reset_min_max)
 
         for path in self.model.device_paths:
-            device_name = subprocess.check_output(['cat', path + '/type'], encoding='utf-8').strip()
+            device_name = subprocess.check_output(['cat', path + '/name'], encoding='utf-8').strip()
             device_action = QtWidgets.QAction(device_name, self, checkable=True, checked=True)
             device_action.device = device_name
             device_action.toggled.connect(self.device_manager)
@@ -39,6 +39,7 @@ class TemperatureMonitor(Ui_MainWindow, QtWidgets.QMainWindow):
 
         self.actionOpen_New_Window.triggered.connect(self.open_new_window)
         self.actionClose.triggered.connect(self.close_application)
+        self.actionCreateCSV_log_file.triggered.connect(self.create_log)
         self.actionReset_Min_Max.triggered.connect(self.reset_min_max)
         self.actionSet_Refresh_Rate.triggered.connect(self.refresh_rate_popup)
         self.actionAbout.triggered.connect(self.help_popup)

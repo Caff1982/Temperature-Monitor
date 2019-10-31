@@ -7,6 +7,9 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 
+INTEL_PATH = '/sys/class/thermal/'
+AMD_PATH = '/sys/class/hwmon/'
+
 
 class CustomTableModel(QtCore.QAbstractTableModel):
     """
@@ -15,8 +18,8 @@ class CustomTableModel(QtCore.QAbstractTableModel):
     def __init__(self, refresh_rate):
         QtCore.QAbstractTableModel.__init__(self)
 
-        self.path = '/sys/class/thermal/' # default for linux machines
-        self.device_paths = [self.path + fn for fn in os.listdir(self.path) if fn[:5] == 'therm']
+        self.path = AMD_PATH
+        self.device_paths = [self.path + fn for fn in os.listdir(self.path)]
         self.get_device_data()
 
         self.refresh_rate = refresh_rate
@@ -37,15 +40,17 @@ class CustomTableModel(QtCore.QAbstractTableModel):
         """
         self.device_data = []
         for i in range(len(self.device_paths)):
-                device_name = subprocess.check_output(['cat', self.device_paths[i] + '/type'], encoding='utf-8').strip()
-                cur_temp = subprocess.check_output(['cat', self.device_paths[i] +'/temp'], encoding='utf-8')[:2]
-                row_data = [self.device_paths[i], device_name, cur_temp, cur_temp, cur_temp]
+                device_name = subprocess.check_output(['cat', self.device_paths[i] + '/name'], encoding='utf-8').strip()
+                temp_filename = [fn for fn in os.listdir(self.device_paths[i]) if '_input' in fn][0]
+                temp_path = os.path.join(self.device_paths[i], temp_filename)
+                cur_temp = int(subprocess.check_output(['cat', os.path.join(self.device_paths[i], temp_path)], encoding='utf-8')[:2])
+                row_data = [self.device_paths[i], device_name, cur_temp, cur_temp, cur_temp, temp_path]
                 self.device_data.append(row_data)
 
     def update_model(self):
         self.layoutAboutToBeChanged.emit()
         for i in range(len(self.device_data)):
-            cur_temp = subprocess.check_output(['cat', self.device_data[i][0] +'/temp'], encoding='utf-8')[:2]
+            cur_temp = int(subprocess.check_output(['cat', self.device_data[i][5]], encoding='utf-8')[:2])
             self.device_data[i][2] = cur_temp
             self.device_data[i][3] = min(cur_temp, self.device_data[i][3])
             self.device_data[i][4] = max(cur_temp, self.device_data[i][4])
