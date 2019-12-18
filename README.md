@@ -1,6 +1,6 @@
 # Temperature-Monitor
 
-![Temperature-Monitor screenshot](https://raw.githubusercontent.com/Caff1982/Temperature-Monitor/images/screenshot.jpg)
+![Temperature-Monitor screenshot](https://github.com/Caff1982/Temperature-Monitor/blob/master/images/screenshot.jpg)
 
 Temperature-Monitor is designed to monitor the temperature of devices in Linux computers. The GUI allows you to monitor the temperatures live and it can also log the results to a CSV file. The refresh rate can be set by the user and the devices can be enabled/disabled using the 'Devices' menu.
 
