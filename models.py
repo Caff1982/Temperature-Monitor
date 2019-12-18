@@ -2,10 +2,10 @@ import os
 import subprocess
 from datetime import datetime
 import csv
+import collections
 
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
-from PyQt5 import QtGui
 
 
 class CustomTableModel(QtCore.QAbstractTableModel):
@@ -22,13 +22,16 @@ class CustomTableModel(QtCore.QAbstractTableModel):
         self.refresh_rate = refresh_rate
         self.logging = False
         self.filename = None
-        self.rows = len(self.device_data) 
+        self.rows = len(self.device_data)
         self.columns = ['Device', 'Temp', 'Min', 'Max']
 
-        self.timer = QtCore.QTimer()  
+        self.timer = QtCore.QTimer()
         self.timer.setInterval(self.refresh_rate)
         self.timer.timeout.connect(self.update_model)
         self.timer.start(self.refresh_rate)
+
+        self.device_to_plot = 0
+        self.temp_tracker = collections.deque(maxlen=60)
 
     def get_device_data(self):
         """
@@ -37,20 +40,33 @@ class CustomTableModel(QtCore.QAbstractTableModel):
         """
         self.device_data = []
         for i in range(len(self.device_paths)):
-                device_name = subprocess.check_output(['cat', self.device_paths[i] + '/name'], encoding='utf-8').strip()
-                temp_filename = [fn for fn in os.listdir(self.device_paths[i]) if '_input' in fn][0]
-                temp_path = os.path.join(self.device_paths[i], temp_filename)
-                cur_temp = int(subprocess.check_output(['cat', os.path.join(self.device_paths[i], temp_path)], encoding='utf-8')[:2])
-                row_data = [self.device_paths[i], device_name, cur_temp, cur_temp, cur_temp, temp_path]
-                self.device_data.append(row_data)
+            device_name = subprocess.check_output(['cat', self.device_paths[i] + '/name'],
+                                                  encoding='utf-8').strip()
+            temp_filename = [fn for fn in os.listdir(self.device_paths[i]) if '_input' in fn][0]
+            temp_path = os.path.join(self.device_paths[i], temp_filename)
+            cur_temp = int(subprocess.check_output(['cat', os.path.join(self.device_paths[i], temp_path)],
+                                                   encoding='utf-8')[:2])
+
+            if i == 0:
+                row_data = [self.device_paths[i], device_name, cur_temp,
+                            cur_temp, cur_temp, 'Yes', temp_path]
+            else:
+                row_data = [self.device_paths[i], device_name, cur_temp,
+                            cur_temp, cur_temp, 'No', temp_path]
+            self.device_data.append(row_data)
 
     def update_model(self):
         self.layoutAboutToBeChanged.emit()
         for i in range(len(self.device_data)):
-            cur_temp = int(subprocess.check_output(['cat', self.device_data[i][5]], encoding='utf-8')[:2])
+            cur_temp = int(subprocess.check_output(['cat',
+                                                   self.device_data[i][6]],
+                                                   encoding='utf-8')[:2])
             self.device_data[i][2] = cur_temp
             self.device_data[i][3] = min(cur_temp, self.device_data[i][3])
             self.device_data[i][4] = max(cur_temp, self.device_data[i][4])
+
+        self.temp_tracker.appendleft(self.device_data[self.device_to_plot][2])
+
         self.layoutChanged.emit()
 
         if self.logging:
@@ -88,7 +104,6 @@ class CustomTableModel(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.DisplayRole:
             return self.device_data[row][col]
 
-
     def create_log_file(self):
         """
         Creates a csv log file for temperatures,
@@ -118,23 +133,24 @@ class CustomTableModel(QtCore.QAbstractTableModel):
         self.timer.setInterval(self.refresh_rate)
         self.timer.timeout.connect(self.update_model)
         self.timer.start(self.refresh_rate)
-        print(self.refresh_rate)
         self.layoutChanged.emit()
 
     def remove_device(self, device):
         self.layoutAboutToBeChanged.emit()
         for row in self.device_data:
             if row[1] == device:
-                self.device_data.remove(row) 
+                self.device_data.remove(row)
         self.layoutChanged.emit()
 
     def add_device(self, device):
         self.layoutAboutToBeChanged.emit()
         for path in self.device_paths:
-            device_name = subprocess.check_output(['cat', path + '/type'], encoding='utf-8').strip()
+            device_name = subprocess.check_output(['cat', path + '/name'], encoding='utf-8').strip()
             if device_name == device:
-                cur_temp = subprocess.check_output(['cat', path +'/temp'], encoding='utf-8')[:2]
-                row_data = [path, device_name, cur_temp, cur_temp, cur_temp]
+                temp_filename = [fn for fn in os.listdir(path) if '_input' in fn][0]
+                temp_path = os.path.join(path, temp_filename)
+                cur_temp = int(subprocess.check_output(['cat', temp_path], encoding='utf-8')[:2])
+                row_data = [path, device_name, cur_temp, cur_temp, cur_temp, temp_path]
                 self.device_data.append(row_data)
         self.layoutChanged.emit()
 
@@ -153,8 +169,3 @@ class InLineEditDelegate(QtWidgets.QItemDelegate):
     def setEditorData(self, editor, index):
         text = index.data(QtCore.Qt.EditRole) or index.data(QtCore.Qt.DisplayRole)
         editor.setText(str(text))
-
-
-  
-
-

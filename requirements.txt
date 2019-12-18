@@ -1,4 +1,4 @@
-pkg-resources==0.0.0
+matplotlib==3.1.2
 PyQt5==5.13.0
 PyQt5-sip==4.19.18
 qtmodern==0.1.4
